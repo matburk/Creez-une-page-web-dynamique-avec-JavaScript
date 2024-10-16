@@ -29,13 +29,16 @@
         <main class="login">
             <section id="contact">
                 <h2>Log In</h2>
-                <p class="message-error"></p>
+                <!-- Erreurs de connexion -->
+                <p class="alredyLogged__error"></p>
+                <p class="loginEmail__error"></p>
+                <p class="loginMdp__error"></p>
                 <form action="#" method="post">
                     <label for="email">E-mail</label>
                     <input type="email" name="email" id="email">
                     <label for="password"> Mot de passe</label>
                     <input type="password" name="password" id="password">
-                    <input type="submit" value="Se connecter">
+                    <input type="submit" value="Se connecter" id="submit">
                     <a class="reset-password" href="#">Mot de passe oublié</a>
                 </form>
             </section>

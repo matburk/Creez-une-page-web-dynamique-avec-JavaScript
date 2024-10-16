@@ -18,20 +18,24 @@ function modal() {
             window.sessionStorage.removeItem("loged");
         });
     }
-    /* Au click sur "Modifier" affichage de la modale pour gérer les projets */
+
+    /* Au clic sur "Modifier", affichage de la modale pour gérer les projets */
     divEdit.addEventListener("click", () => {
         containerModals.style.display = "flex";
     });
-    /* Au click sur "la croix dans la modale" ferme l'affichage pour gérer les projets */
+
+    /* Au clic sur "la croix dans la modale", ferme l'affichage pour gérer les projets */
     closeModals.addEventListener("click", () => {
         containerModals.style.display = "none";
     });
-    /* Permet de fermer la modale sans passer par le croix */
+
+    /* Permet de fermer la modale sans passer par la croix */
     containerModals.addEventListener("click", (e) => {
         if (e.target.className === "container-modals") {
             containerModals.style.display = "none";
         }
     });
+
     /* Permet de fermer la modale en appuyant sur la touche "Echap" */
     window.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
@@ -39,42 +43,50 @@ function modal() {
         }
     });
 }
-modal()
+modal();
 
 /* Affichage et gestion de la galerie d'images dans la modale 1 */
 async function displayWorkModal() {
     projetModal.innerHTML = "";
     const imageWork = await getWorks();
+
     imageWork.forEach(projet => {
         const figure = document.createElement("figure");
         const img = document.createElement("img");
         const span = document.createElement("span");
         const trash = document.createElement("i");
+
         trash.classList.add("fa-solid", "fa-trash-can");
         trash.id = projet.id;
 
         /* Ajoute un gestionnaire d'événements au clic sur l'icône de corbeille */
-        trash.addEventListener("click", () =>  {
-            /* Récupèration du token d'authentification depuis la sessionStorage */
-            const token = window.sessionStorage.getItem("token");
-            /* Envoie une requête DELETE au serveur pour supprimer le projet */
-            fetch(`http://localhost:5678/api/works/${projet.id}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
-            .then (res => {
-                console.log(res)
-                /* Suppression d'image dans la galerie */
-                figure.remove();
-                /* Actualisation de la galerie d'image */
-                displayWorks();
-            })
-            .catch (error => {
-                console.error(error)
-            })
-        })
+        trash.addEventListener("click", () => {
+            /* Récupération du token d'authentification depuis le localStorage */
+            const token = window.localStorage.getItem("token");
+
+            if (token) {
+                /* Envoie une requête DELETE au serveur pour supprimer le projet */
+                fetch(`http://localhost:5678/api/works/${projet.id}`, {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`Erreur HTTP ! statut : ${res.status}`);
+                    }
+                    figure.remove();  // Supprimer l'image de l'interface utilisateur
+                    displayWorks();   // Rafraîchir la galerie
+                })
+                .catch(error => {
+                    console.error("Erreur lors de la suppression :", error);
+                });
+            } else {
+                alert("Vous devez être connecté pour supprimer un projet.");
+                window.location.href = "login.html";  // Rediriger vers la page de login si pas de token
+            }
+        });
 
         img.src = projet.imageUrl;
         span.appendChild(trash);
@@ -97,17 +109,19 @@ const markAdd = document.querySelector(".modal-addworks .fa-xmark");
 
 /* Fonction permettant l'affichage de la modale 2 */
 function displayAddWorkModal() {
-    /* Au clique du boutton de la modale 1 affiche la modale 2 pour ajouter une image */
+    /* Au clic du bouton de la modale 1, affiche la modale 2 pour ajouter une image */
     btnAddWorkModal.addEventListener("click", () => {
         modalAddWork.style.display = "flex"; /* Affichage de la modale 2 */
         modalProjet.style.display = "none"; /* Masque l'affichage de la modale 1 */
     });
-    /* Au clique de la flèche retour à la modale 1 */
+
+    /* Au clic de la flèche, retour à la modale 1 */
     arrowleft.addEventListener("click", () => {
         modalAddWork.style.display = "none"; /* Masque l'affichage de la modale 2 */
         modalProjet.style.display = "flex"; /* Affichage de la modale 1 */
     });
-    /* Au clique sur la croix de la modale 2 fermeture de la fenêtre et retour à l'index */
+
+    /* Au clic sur la croix de la modale 2, fermeture de la fenêtre et retour à l'index */
     markAdd.addEventListener("click", () => {
         containerModals.style.display = "none";
     });
@@ -157,8 +171,7 @@ function imagePreview() {
     }
 }
 
-/* Fonction permettant de changer le style CSS du bouton "Valider" et le rendant 
-fonctionnelle quand les champs "image, titre & catégorie" sont remplie */
+/* Fonction permettant de changer le style CSS du bouton "Valider" et le rendant fonctionnel quand les champs "image, titre & catégorie" sont remplis */
 function formCompleted() {
     const title = document.querySelector("#title");
     const category = document.querySelector("#category-input");
@@ -167,7 +180,7 @@ function formCompleted() {
     if (title.value !== "" && inputFile.files[0] !== undefined && category.value !== "") {
         buttonValidForm.classList.remove("button-modal-2");
         buttonValidForm.classList.add("button-modal-2-active");
-        buttonValidForm.disabled = false; /* Activer le bouton "Valider" si les inputs sont remplie */
+        buttonValidForm.disabled = false; /* Activer le bouton "Valider" si les inputs sont remplis */
         
         buttonValidForm.addEventListener("click", () => {
             containerModals.style.display = "none";
@@ -176,7 +189,7 @@ function formCompleted() {
     } else {
         buttonValidForm.classList.remove("button-modal-2-active");
         buttonValidForm.classList.add("button-modal-2");
-        buttonValidForm.disabled = true; /* Désactive le bouton "Valider" si les input ne sont pas remplie */
+        buttonValidForm.disabled = true; /* Désactive le bouton "Valider" si les inputs ne sont pas remplis */
     }
 }
 
@@ -187,7 +200,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const title = document.querySelector("#title");
     const category = document.querySelector("#category-input");
 
-    /* Ajout d'un écouteur d'événements sur le changement des l'inputs de type fichier image, titre & catégorie */
+    /* Ajout d'un écouteur d'événements sur le changement des inputs de type fichier image, titre & catégorie */
     inputFile.addEventListener("change", imagePreview);
     title.addEventListener("change", formCompleted);
     category.addEventListener("change", formCompleted);
@@ -211,29 +224,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             /* Récupération du token de la session */
-            const token = window.sessionStorage.getItem("token");
-            /* Envoi de la requête POST au serveur avec les données du formulaire */
-            const response = await fetch("http://localhost:5678/api/works/", {
-                method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`
-                },
-                body: playload,
-            });
+            const token = window.localStorage.getItem("token");
 
-            /* Vérification si la réponse du serveur est OK */
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+            if (token) {
+                /* Envoi de la requête POST au serveur avec les données du formulaire */
+                const response = await fetch("http://localhost:5678/api/works/", {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: playload,
+                });
+
+                /* Vérification si la réponse du serveur est OK */
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                /* Récupération des données JSON de la réponse */
+                const data = await response.json();
+                /* Affichage d'un message de succès dans la console */
+                console.log("Nouvelle image bien chargée :", data);
+                /* Actualisation de la galerie d'image et de la modale permettant la suppression d'une image */
+                displayWorks();
+                displayWorkModal();
+
+            } else {
+                alert("Vous devez être connecté pour ajouter un projet.");
+                window.location.href = "login.html";  // Redirection vers la page de login
             }
-
-            /* Récupération des données JSON de la réponse */
-            const data = await response.json();
-            /* Affichage d'un message de succès dans la console */
-            console.log("Nouvelle image bien chargée !" + data);
-            /* Actualisation de la galerie d'image et de la modale permettant la suppression d'une image */
-            displayWorks();
-            displayWorkModal();
-
         } catch (error) {
             /* Gestion des erreurs lors de l'envoi de la requête */
             console.log("Une erreur est survenue lors de l'envoi de l'image :", error.message);

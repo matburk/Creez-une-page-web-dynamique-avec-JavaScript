@@ -1,80 +1,85 @@
-//#region - /* ===== VÉRIFICATION DE FETCH ===== */
-if (!window.fetch) {
-    alert("Your browser does not support fetch API");
+const alredyLoggedError = document.querySelector(".alredyLogged__error"); 
+const loginEmailError = document.querySelector(".loginEmail__error"); 
+const loginMdpError = document.querySelector(".loginMdp__error"); 
+
+const email = document.getElementById("email");
+const password = document.getElementById("password");
+
+const submit = document.getElementById("submit");
+
+alredyLogged();
+
+// Si l'utilisateur est déjà connecté, on supprime le token
+function alredyLogged() {
+    if (localStorage.getItem("token")) {
+        localStorage.removeItem("token");
+
+        const p = document.createElement("p");
+        p.innerHTML = "<br><br><br>Vous avez été déconnecté, veuillez vous reconnecter";
+        alredyLoggedError.appendChild(p);
+        return;
+    }
 }
-//#endregion
 
-//#region - /*===== VARIABLES =====*/
-const emailInput = document.querySelector("form #email");
-const passwordInput = document.querySelector("form #password");
-const loginForm = document.querySelector("form");
-const messageError = document.querySelector(".login p");
-//#endregion
+// Au clic, on envoie les valeurs de connextion
+submit.addEventListener("click", (event) => {
+    event.preventDefault();  // Empêche le rechargement de la page
 
-//#region - /*===== PROCESS LOGIN =====*/
-/* Ajout un écouteur d'événement pour le formulaire de connexion */
-loginForm.addEventListener("submit", (e) => {
-    
-    /* Empêche que le formulaire de connexion recharge la page */
-    e.preventDefault();
+    let user = {
+        email: email.value,
+        password: password.value
+    };
+    login(user);
+});
 
-    /* Récupère les valeurs des champs email et password saisies par l'utilisateur */
-    const userEmail = emailInput.value;
-    const userPassword = passwordInput.value;
-
-    /* Vérification si les champs sont vides. Affiche un message d'erreur 
-    si l'un des champs est vide et arrête l'exécution */
-    if (!userEmail || !userPassword) {
-        messageError.textContent = "Erreur dans l’identifiant ou le mot de passe";
+// Fonction de connexion
+function login(id) {
+    console.log(id);
+    loginEmailError.innerHTML = "";
+    loginMdpError.innerHTML = "";
+    // véeification de l'email
+    if (!id.email.match(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]{2,}\.[a-z]{2,4}$/g)) {
+        const p = document.createElement("p");
+        p.innerHTML = "Veuillez entrer une addresse mail valide";
+        loginEmailError.appendChild(p);
+        return;
+    }
+    // vérifcation du mot de passe
+    if (id.password.length < 5 && !id.password.match(/^[a-zA-Z0-9]+$/g)) {
+        const p = document.createElement("p");
+        p.innerHTML = "Veuillez entrer un mot de passe valide";
+        loginMdpError.appendChild(p);
         return;
     }
 
-    /* Préparation des données à envoyer au serveur sous forme d'objet JSON */
-    const login = {
-        email: userEmail,
-        password: userPassword,
-    };
-
-    /* Convertit l'objet login en une chaîne JSON */
-    const user = JSON.stringify(login);
-
-    /* Envoi d'une requête POST au serveur pour l'authentification de l'utilisateur */
-    fetch("http://localhost:5678/api/users/login", {
-        method: "POST", /* Méthode de la requête HTTP */
-        mode: "cors", /* Mode CORS (Cross-Origin Resource Sharing) pour permettre des requêtes depuis un autre domaine */
-        credentials: "same-origin", /* Utilise les mêmes informations d'identification que la ressource appelante */
-        headers: { "Content-Type": "application/json" }, /* En-têtes de la requête indiquant que le contenu est au format JSON */
-        body: user, /* Corps de la requête contenant les données utilisateur au format JSON */
+    else {
+    // verification de l'email et du mot de passe
+    fetch('http://localhost:5678/api/users/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json;charset=utf-8'
+        },
+        body: JSON.stringify(id)
     })
+    .then(response => response.json())
+    .then(result => { 
+        console.log(result);
+        // Si couple email/mdp incorrect
+        if (result.error || result.message) {
+            const p = document.createElement("p");
+            p.innerHTML = "La combinaison e-mail/mot de passe est incorrecte";
+            loginMdpError.appendChild(p);
 
-    /* Traitement de la réponse de la requête */
-    .then((response) => {
-        if (!response.ok) {
-            /* Gestion des erreurs en cas de réponse non réussie du serveur */
-            return response.json().then((error) => {
-                throw new Error(`Erreur lors de la requête : ${error.message}`);
-            });
+        // Si couple email/mdp correct
+        } else if (result.token) {
+            localStorage.setItem("token", result.token);
+            window.location.href = "index.html";
         }
-        return response.json(); /* Passe la réponse HTTP en JSON en cas de succès */
+    
     })
-
-    /* Traitement des données retournées par le serveur après authentification réussie */
-    .then((data) => {
-        /* Récupation du token et de l'ID de l'utilisateur de la réponse JSON */
-        const { userId, token: userToken } = data;
-        
-        /* Stockage du token et de l'ID de l'utilisateur dans la sessionStorage du navigateur */
-        window.sessionStorage.setItem("token", userToken, "userId", userId);
-        window.sessionStorage.setItem("loged", "true"); /* Ajout d'une indication de connexion */
-        
-        /* Redirection de l'utilisateur vers la page index.html après une authentification réussie */
-        window.location.href = "../index.html";
-    })
-
-    /* Gestion des erreurs lors de la requête ou du traitement des données */
-    .catch((error) => {
-        console.error("Une erreur s'est produite lors de la récupération des données", error);
-    });
-});
-
-//#endregion
+    // prevenir l'utilisateur en cas d'erreur
+    
+    .catch(error => 
+        console.log(error));
+}
+}
